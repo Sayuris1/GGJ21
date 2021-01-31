@@ -1,0 +1,159 @@
+local lib = require "modules.general"
+local player = require "modules.player"
+local npc = require "modules.npc"
+
+function init(self)
+	msg.post(".", "acquire_input_focus")
+
+	player.fallowBalls(false, 7)
+
+	go.property("speed", 500)
+	go.property("dashSpeed", 5)
+
+	-- Variables
+	self.startPos = go.get_position()
+	self.currentPos = self.startPos
+	self.camPos = go.get_position("/camera")
+
+	self.isColorAnim = false
+
+	self.collidedNpcs = {}
+end
+
+function on_message(self, message_id, message, sender)
+	if message_id == lib.hashed("trigger_response") then
+		-- Cam Move
+		if message.other_group == lib.hashed("camUD") and message.enter then
+			self.currentPos = go.get_position()
+			local otherPos = go.get_position(message.other_id)
+
+			-- Up or down
+			if otherPos.y <= self.currentPos.y then
+				-- Enable fallow balls
+				if message.other_id == lib.hashed("/cam") then
+					player.fallowBalls(true, 7)
+				-- Disable fallow balls
+				elseif message.other_id == lib.hashed("/cam9") then
+					player.fallowBalls(true, 9)
+					player.fallowBalls(false, 10)
+				end
+
+				self.camPos.y = self.camPos.y - 740
+				go.animate("/camera", "position", go.PLAYBACK_ONCE_FORWARD, self.camPos, go.EASING_INSINE, 0.2)
+
+				self.currentPos.y = self.currentPos.y - 130
+				go.set_position(self.currentPos, "/player")
+			else
+				-- Disable fallow balls
+				if message.other_id == lib.hashed("/cam") then
+					player.fallowBalls(false, 7)
+				-- Enable fallow balls
+				elseif message.other_id == lib.hashed("/cam9") then
+					player.fallowBalls(false, 9)
+					player.fallowBalls(true, 10)
+				end
+
+				self.camPos.y = self.camPos.y + 740
+				go.animate("/camera", "position", go.PLAYBACK_ONCE_FORWARD, self.camPos, go.EASING_INSINE, 0.2)
+
+				self.currentPos.y = self.currentPos.y + 130
+				go.set_position(self.currentPos, "/player")
+			end
+		elseif message.other_group == lib.hashed("camLR") and message.enter then
+			self.currentPos = go.get_position()
+			local otherPos = go.get_position(message.other_id)
+
+			-- Left or right
+			if otherPos.x <= self.currentPos.x then
+				-- Enable fallow balls
+				if message.other_id == lib.hashed("/cam5") then
+					player.fallowBalls(true, 7)
+				elseif message.other_id == lib.hashed("/cam7") then
+					player.fallowBalls(true, 9)
+				elseif message.other_id == lib.hashed("/cam11") then
+					player.fallowBalls(true, 11)
+				-- Disable fallow balls
+				elseif message.other_id == lib.hashed("/cam8") then
+					player.fallowBalls(false, 7)
+				elseif message.other_id == lib.hashed("/cam10") then
+					player.fallowBalls(false, 11)
+				end
+
+				self.camPos.x = self.camPos.x - 1300
+				go.animate("/camera", "position", go.PLAYBACK_ONCE_FORWARD, self.camPos, go.EASING_INSINE, 0.2)
+
+				self.currentPos.x = self.currentPos.x - 130
+				go.set_position(self.currentPos, "/player")
+			else
+				-- Disable fallow balls
+				if message.other_id == lib.hashed("/cam5") then
+					player.fallowBalls(false, 7)
+				elseif message.other_id == lib.hashed("/cam7") then
+					player.fallowBalls(false, 9)
+				elseif message.other_id == lib.hashed("/cam11") then
+					player.fallowBalls(false, 11)
+				-- Enable fallow balls
+				elseif message.other_id == lib.hashed("/cam8") then
+					player.fallowBalls(true, 7)
+				elseif message.other_id == lib.hashed("/cam10") then
+					player.fallowBalls(true, 11)
+				end
+
+				self.camPos.x = self.camPos.x + 1300
+				go.animate("/camera", "position", go.PLAYBACK_ONCE_FORWARD, self.camPos, go.EASING_INSINE, 0.2)
+
+				self.currentPos.x = self.currentPos.x + 130
+				go.set_position(self.currentPos, "/player")
+			end
+		elseif message.other_group == lib.hashed("trigger") then
+			-- NPC
+			if message.enter then
+				-- Add other npc to the table
+				self.collidedNpcs[#self.collidedNpcs+1] = message.other_id
+			else
+				-- Delete that npc from the table then shift the table
+				lib.Shift(self.collidedNpcs, message.other_id, false)
+			end
+		elseif message.other_group == lib.hashed("upgrade") then
+			-- Enable upgrade then animate
+			if message.other_id == lib.hashed("/shift") then
+				particlefx.play("/shift#upgrade")
+				particlefx.set_constant("/shift#upgrade", "emitter", "tint", npc.playerTint)
+
+				player.canDash = true
+				go.delete("/shift", true)
+				go.animate("/shift_tuto#label", "color", go.PLAYBACK_ONCE_FORWARD, npc.getTint(1), go.EASING_LINEAR, 1)
+			elseif message.other_id == lib.hashed("/space") then
+				particlefx.play("space#upgrade")
+				particlefx.set_constant("space#upgrade", "emitter", "tint", npc.playerTint)
+
+				player.canZone = true
+				go.delete("/space", true)
+				go.animate("/space_tuto#label", "color", go.PLAYBACK_ONCE_FORWARD, npc.getTint(1), go.EASING_LINEAR, 1)
+			end
+		end
+	end
+end
+
+function on_input(self, action_id, action)
+	lib.CursorUpdate(action, action_id)
+	-- Move ------------------------------------------------------------------------------------------------------------
+	if action_id == lib.hashed("right") then
+		msg.post("#collisionobject", "apply_force", {force = vmath.vector3(self.speed, 0, 0), position = self.currentPos})
+	elseif action_id == lib.hashed("left") then
+		msg.post("#collisionobject", "apply_force", {force = vmath.vector3(-self.speed, 0, 0), position = self.currentPos})
+	elseif action_id == lib.hashed("up") then
+		msg.post("#collisionobject", "apply_force", {force = vmath.vector3(0, self.speed, 0), position = self.currentPos})
+	elseif action_id == lib.hashed("down") then
+		msg.post("#collisionobject", "apply_force", {force = vmath.vector3(0, -self.speed, 0), position = self.currentPos})
+	--------------------------------------------------------------------------------------------------------------------
+	elseif action_id == lib.hashed("touch") and action.released then
+		player.pressedTouch(self)
+	elseif action_id == lib.hashed("dash") and player.canDash then
+		if action.pressed then
+			self.speed = self.speed * self.dashSpeed
+		elseif action.released then
+			self.speed = self.speed / self.dashSpeed
+		end
+	end
+end

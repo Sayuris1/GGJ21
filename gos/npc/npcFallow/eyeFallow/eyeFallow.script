@@ -1,0 +1,18 @@
+local lib = require "modules.general"
+
+function init(self)
+	go.property("parentUrl", msg.url())
+	go.property("fallow", msg.url())
+
+	self.distance = go.get_position() - go.get_position(self.parentUrl)
+end
+
+function update(self, dt)
+	local pos = go.get_position()
+	-- Fallow
+	local parentPos = go.get_position(self.parentUrl)
+	parentPos.z = parentPos.z + 1
+	go.set_position(self.distance + parentPos)
+
+	lib.LookAt(go.get_position(self.fallow), pos, go.get_id())
+end

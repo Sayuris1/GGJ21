@@ -1,0 +1,79 @@
+local lib = require "modules.general"
+local npc = require "modules.npc"
+
+function init(self)
+	go.property("class", 1)
+	go.property("speed", 1000)
+	go.property("fallow", 0)
+
+	self.id = "/npc" .. self.fallow
+	if self.fallow == 0 then
+		self.id = "/player"
+	end
+
+	self.go = false
+
+	self.isColorAnim = false
+	self.url = msg.url()
+
+	self.distance = vmath.vector3(0, -23, 1)
+	self.startPos = go.get_position()
+
+	self.collidedNpcs = {}
+
+	local pos = go.get_position()
+
+	self.eye1 = factory.create("#factory", pos + vmath.vector3(24, 7, 1), go.get_rotation(), {parentUrl = msg.url()})
+	self.eye2 = factory.create("#factory", pos + vmath.vector3(-24, 7, 1), go.get_rotation(), {parentUrl = msg.url()})
+	self.mo = factory.create("#factory1", pos + self.distance, go.get_rotation())
+end
+
+function final(self)
+	go.delete(self.eye1)
+	go.delete(self.eye2)
+	go.delete(self.mo)
+end
+
+function update(self, dt)
+	-- Fallow player and push
+	if self.go then
+		local selfPos = go.get_position()
+
+		local playerPos = go.get_position(self.id)
+		lib.Fallow(selfPos, playerPos, self.speed)
+	end
+
+	-- Fallow mo
+	local parentPos = go.get_position()
+	parentPos.z = parentPos.z + 1
+	go.set_position(self.distance + parentPos, self.mo)
+end
+
+function on_message(self, message_id, message, sender)
+	-- Send from player
+	if message_id == lib.hashed("pressed") then
+		npc.pressedTouch(self)
+	elseif message_id == lib.hashed("trigger_response") then
+		if message.other_id ~= lib.zoneUrl.path then
+			if message.enter then
+				-- Add other npc to the table
+				self.collidedNpcs[#self.collidedNpcs+1] = message.other_id
+			else
+				-- Delete that npc from the table then shift the table
+				lib.Shift(self.collidedNpcs, message.other_id, false)
+			end
+		end
+	elseif message_id == lib.hashed("disable") then
+		if sender ~= msg.url("main:/player#player") or sender ~= msg.url("main:/pruple#start") then
+			go.set_position(self.startPos)
+
+			self.go = false
+		else
+			go.delete()
+		end
+	elseif message_id == lib.hashed("enable") then
+		timer.delay(0.3, false, function ()
+			self.go = true
+		end)
+	end
+end

@@ -1,0 +1,152 @@
+local lib = require "modules.general"
+local npc = require "modules.npc"
+
+local clicked = false
+
+function init(self)
+	go.property("coTilt", vmath.vector4())
+	go.property("class", 0)
+
+	self.startScale = go.get_scale()
+	self.startPos = go.get_position()
+end
+
+function on_message(self, message_id, message, sender)
+	if not clicked then
+		if message_id == lib.hashed("cursor_over") then
+			-- Scale
+			local id = message.id
+			local scale = go.get_scale(id) * 1.1
+
+			go.animate(".", "scale", go.PLAYBACK_LOOP_PINGPONG, scale, go.EASING_OUTEXPO, 1)
+
+			-- Pos
+			local pos = self.startPos
+			pos.z = pos.z + 1
+			go.set_position(pos)
+
+			npc.playerTint = self.coTilt
+			msg.post("@render:", "clear_color", { color = self.coTilt } )
+			
+			sprite.set_constant("/player#sprite", "tint", self.coTilt)
+			npc.playerTint = self.coTilt
+		elseif message_id == lib.hashed("cursor_out") then
+			-- Scale
+			local id = message.id
+			go.cancel_animations(".", "scale")
+			go.animate(".", "scale", go.PLAYBACK_ONCE_FORWARD, self.startScale, go.EASING_LINEAR, 1)
+
+			-- Pos
+			local pos = self.startPos
+			pos.z = pos.z - 1
+			go.set_position(pos)
+		elseif message_id == lib.hashed ("clicked") then
+			npc.initPlayerTint(self.class)
+			msg.post("@render:", "clear_color", { color = vmath.vector4(0, 0, 0, 1) } )
+			
+			go.animate("/yellow#sprite", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 3, 0, function ()
+				go.delete("/start", true)
+			end)
+			go.animate("/black#sprite", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 3)
+			go.animate("/blue#sprite", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 3)
+			go.animate("/green#sprite", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 3)
+			go.animate("/orange#sprite", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 3)
+			go.animate("/pink#sprite", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 3)
+			go.animate("/pruple#sprite", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 3)
+			go.animate("/red#sprite", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 3)
+			go.animate("/turquise#sprite", "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 3)
+
+			-- Init lvl
+			-- Spawn trigger
+			local spawnPos = go.get_position("/player")
+			spawnPos.z = spawnPos.z - 1
+			factory.create("/player#factory", spawnPos, nil, {tint = npc.playerTint}, vmath.vector3(7, 7, 1))
+			
+			go.delete("/cric")
+			
+			msg.post("/npcFallow", "disable")
+			msg.post("/npcFallow1", "disable")
+			msg.post("/npcFallow2", "disable")
+			msg.post("/npcFallow3", "disable")
+			msg.post("/npcFallow4", "disable")
+			msg.post("/npcFallow5", "disable")
+			msg.post("/npcFallow7", "disable")
+			msg.post("/npc25", "disable")
+			msg.post("/npc26", "disable")
+			msg.post("/npc27", "disable")
+
+			sprite.set_constant("/arrow#sprite", "tint", vmath.vector4(0))
+			
+			sprite.set_constant("/right_light#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/right_light2#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/right_light4#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/right_light7#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/right_light10#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/right_light11#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/left_light5#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/left_light8#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/down_light3#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/down_light5#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/up_light#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/up_light6#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/up_light9#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/left_light#sprite", "tint", vmath.vector4(0))
+
+			sprite.set_constant("/up_light6#sprite", "tint", npc.getTint(go.get("/npc16#npc", "class")))
+			sprite.set_constant("/door#sprite", "tint", npc.getTint(go.get("/npc28#npc", "class")))
+			sprite.set_constant("/door1#sprite", "tint", npc.getTint(go.get("/npc#npc", "class")))
+			sprite.set_constant("/door3#sprite", "tint", npc.getTint(go.get("/npc3#npc", "class")))
+			sprite.set_constant("/door4#sprite", "tint", npc.getTint(go.get("/npc7#npc", "class")))
+			sprite.set_constant("/door5#sprite", "tint", npc.getTint(go.get("/npc9#npc", "class")))
+			sprite.set_constant("/door6#sprite", "tint", npc.getTint(go.get("/npc12#npc", "class")))
+			sprite.set_constant("/door6#sprite1", "tint", npc.getTint(go.get("/npc12#npc", "class")))
+			sprite.set_constant("/door7#sprite", "tint", npc.getTint(go.get("/npc14#npc", "class")))
+			sprite.set_constant("/door2#sprite", "tint", npc.getTint(go.get("/npc2#npc", "class")))
+			sprite.set_constant("/door2#sprite1", "tint", npc.getTint(go.get("/npc2#npc", "class")))
+			sprite.set_constant("/door2#sprite2", "tint", npc.getTint(go.get("/npc2#npc", "class")))
+			sprite.set_constant("/door2#sprite3", "tint", npc.getTint(go.get("/npc2#npc", "class")))
+			sprite.set_constant("/door2#sprite4", "tint", npc.getTint(go.get("/npc2#npc", "class")))
+			sprite.set_constant("/door2#sprite5", "tint", npc.getTint(go.get("/npc2#npc", "class")))
+			sprite.set_constant("/door9#sprite", "tint", npc.getTint(go.get("/npc19#npc", "class")))
+			sprite.set_constant("/door10#sprite", "tint", npc.getTint(go.get("/npc21#npc", "class")))
+			sprite.set_constant("/door11#sprite", "tint", npc.getTint(go.get("/npc23#npc", "class")))
+			sprite.set_constant("/door12#sprite", "tint", npc.getTint(go.get("/npc26#npc", "class")))
+			sprite.set_constant("/door12#sprite1", "tint", npc.getTint(go.get("/npc26#npc", "class")))
+
+			sprite.set_constant("/light#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/light1#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/light2#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/light3#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/light4#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/light5#sprite", "tint", vmath.vector4(0))
+			sprite.set_constant("/light6#sprite", "tint", vmath.vector4(0))
+
+			sprite.set_constant("/mach#sprite", "tint", npc.getTint(go.get("/npc42#npc", "class")))
+			sprite.set_constant("/mach1#sprite", "tint", npc.getTint(go.get("/npc40#npc", "class")))
+			sprite.set_constant("/mach2#sprite", "tint", npc.getTint(go.get("/npc38#npc", "class")))
+			sprite.set_constant("/mach3#sprite", "tint", npc.getTint(go.get("/npc36#npc", "class")))
+			sprite.set_constant("/mach4#sprite", "tint", npc.getTint(go.get("/npc34#npc", "class")))
+			sprite.set_constant("/mach5#sprite", "tint", npc.getTint(go.get("/npc32#npc", "class")))
+			sprite.set_constant("/mach6#sprite", "tint", npc.getTint(go.get("/npc30#npc", "class")))
+			
+			sprite.set_constant("/left_light13#sprite", "tint", npc.getTint(1))
+
+			local tint = npc.getTint(1)
+			go.set("/tuto#label", "color", tint)
+			go.set("/tuto#label1", "color", tint)
+			go.set("/tuto#label2", "color", tint)
+			go.set("/tuto#label3", "color", tint)
+			
+			sprite.set_constant("/shift#sprite", "tint", tint)
+			sprite.set_constant("/space#sprite", "tint", tint)
+			
+			tint.w = 0
+			go.set("/space_tuto#label", "color", tint)
+			go.set("/shift_tuto#label", "color", tint)
+			tint.w = 1
+			-- End init
+
+			clicked = true
+		end
+	end
+end

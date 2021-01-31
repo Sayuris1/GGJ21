@@ -1,0 +1,56 @@
+local lib = require "modules.general"
+
+function init(self)
+	go.property("parentUrl", msg.url())
+
+	self.currentDir = go.get_position()
+
+	self.distance = go.get_position() - go.get_position(self.parentUrl)
+end
+
+function update(self, dt)
+	local pos = go.get_position()
+	-- Fallow
+	local parentPos = go.get_position(self.parentUrl)
+	parentPos.z = parentPos.z + 1
+	go.set_position(self.distance + parentPos)
+
+	-- Turn
+	-- Get linear_velocity
+	local physic = msg.url(self.parentUrl)
+	physic.fragment = "collisionobject"
+
+	local dir = -go.get(physic, "linear_velocity")
+	if vmath.length(dir) <= 0 then
+		dir = vmath.vector3(100)
+		sprite.play_flipbook(go.get(self.parentUrl, "mo"), "mo")
+	elseif vmath.length(dir) <= 180 then
+		sprite.play_flipbook(go.get(self.parentUrl, "mo"), "mo1")
+	elseif vmath.length(dir) <= 200 then
+		sprite.play_flipbook(go.get(self.parentUrl, "mo"), "mo2")
+	elseif vmath.length(dir) <= 220 then
+		sprite.play_flipbook(go.get(self.parentUrl, "mo"), "mo3")
+	elseif vmath.length(dir) <= 450 then
+		sprite.play_flipbook(go.get(self.parentUrl, "mo"), "mo4")
+	elseif vmath.length(dir) <= 700 then
+		sprite.play_flipbook(go.get(self.parentUrl, "mo"), "mo5")
+	end
+	dir = pos + dir
+
+	-- Animate
+	if self.currentDir.x < dir.x then
+		self.currentDir.x = self.currentDir.x + dt
+	elseif self.currentDir.x > dir.x then
+		self.currentDir.x = self.currentDir.x - dt
+	end
+
+	if self.currentDir.y < dir.y then
+		self.currentDir.y = self.currentDir.y + dt
+	elseif self.currentDir.y > dir.y then
+		self.currentDir.y = self.currentDir.y - dt
+	end
+	
+	-- Turn
+	local angle = math.atan2(pos.x - self.currentDir.x , self.currentDir.y - pos.y)
+	go.set_rotation(vmath.quat_rotation_z(angle))
+end

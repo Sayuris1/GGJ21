@@ -1,0 +1,40 @@
+[bootstrap]
+main_collection = /main/main.collectionc
+render = /orthographic/render/orthographic.renderc
+
+[script]
+shared_state = 1
+
+[display]
+width = 1280
+height = 720
+high_dpi = 1
+
+[android]
+input_method = HiddenInputField
+
+[project]
+title = ggj21
+dependencies = https://github.com/britzl/defold-orthographic/archive/master.zip,https://github.com/britzl/defold-input/archive/master.zip
+
+[physics]
+gravity_y = 0.0
+gravity_z = 0.0
+allow_dynamic_transforms = 1
+scale = 0.2
+
+[graphics]
+default_texture_min_filter = linear
+default_texture_mag_filter = linear
+
+[render]
+clear_color_red = 1.0
+
+[sprite]
+max_count = 999
+
+[html5]
+show_made_with_defold = 0
+show_fullscreen_button = 0
+scale_mode = stretch
+
